@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="gold_silver_prices_action" model="ir.actions.act_window">
+            <field name="name">Gold/Silver Prices</field>
+            <field name="res_model">gold.silver.prices</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <menuitem
+            id="menu_gold_silver_prices_root"
+            name="Jewellery Prices"
+            web_icon="fa fa-usd"
+            sequence="100"
+        />
+
+        <menuitem
+            id="menu_gold_silver_prices"
+            name="Gold &amp; Silver Prices"
+            parent="menu_gold_silver_prices_root"
+            action="gold_silver_prices_action"
+            sequence="10"
+        />
+
+        <record id="gold_silver_prices_form" model="ir.ui.view">
+            <field name="name">gold.silver.prices.form</field>
+            <field name="model">gold.silver.prices</field>
+            <field name="arch" type="xml">
+                <form string="Gold and Silver Prices">
+                    <header>
+                        <button name="manual_update_prices" type="object" string="Manually Update Prices" class="oe_highlight"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name" class="oe_edit_only"/>
+                            <h1><field name="name"/></h1>
+                        </div>
+                        <group>
+                            <group string="Gold Prices">
+                                <field name="gold_22k_price"/>
+                                <field name="gold_21k_price"/>
+                                <field name="gold_18k_price"/>
+                                <field name="gold_traditional_price"/>
+                            </group>
+                            <group string="Silver Prices">
+                                <field name="silver_22k_price"/>
+                                <field name="silver_21k_price"/>
+                                <field name="silver_18k_price"/>
+                                <field name="silver_traditional_price"/>
+                                <field name="silver_italian_price"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="gold_silver_prices_tree" model="ir.ui.view">
+            <field name="name">gold.silver.prices.tree</field>
+            <field name="model">gold.silver.prices</field>
+            <field name="arch" type="xml">
+                <list string="Gold and Silver Prices">
+                    <field name="name"/>
+                    <field name="gold_22k_price"/>
+                    <field name="silver_22k_price"/>
+                </list>
+            </field>
+        </record>
+    </data>
+</odoo>
