@@ -306,6 +306,13 @@ class ChatbotController(http.Controller):
         except Exception as e:
             error_msg = str(e)
             _logger.error(f"SQL execution failed: {error_msg}")
+            # Ensure the DB transaction is reset after an error so subsequent
+            # operations in the same request (including fallbacks and session save)
+            # do not fail with "current transaction is aborted".
+            try:
+                request.env.cr.rollback()
+            except Exception:
+                pass
             
             # If SQL execution fails (wrong columns, wrong table, etc), try fallback
             if any(keyword in error_msg.lower() for keyword in ['does not exist', 'no such column', 'syntax error']):
@@ -348,6 +355,11 @@ class ChatbotController(http.Controller):
                     }
                 except Exception as fallback_error:
                     _logger.error(f"Fallback also failed: {str(fallback_error)}")
+                    # Reset transaction before returning error
+                    try:
+                        request.env.cr.rollback()
+                    except Exception:
+                        pass
                     return {
                         "success": False,
                         "error": f"Query failed: {str(fallback_error).split('LINE')[0].strip()}",

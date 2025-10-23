@@ -54,7 +54,7 @@
             return;
         }
 
-        var isMinimized = false;
+        var isMinimized = true;
 
         // Hide welcome message
         var welcomeMsg = document.getElementById('welcomeMessage');
@@ -69,12 +69,17 @@
                 (isUser ? 'justify-content: flex-end;' : 'justify-content: flex-start;');
             
             var bubble = document.createElement('div');
-            bubble.style.cssText = 'max-width: 75%; padding: 12px 16px; border-radius: 18px; font-size: 14px; word-wrap: break-word; ' + 
-                (isUser ? 
-                    'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;' : 
-                    'background: white; color: #374151; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);');
+            bubble.style.cssText = 
+            'max-width: 75%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.6; word-wrap: break-word; margin-bottom: 8px; ' + 
+            (isUser 
+                ? 'background: #3A3A3A; color: #F5F5F5;'      // user bubble
+                : 'background: #2A2A2A; color: #EDEDED;');   // bot bubble
+
             
-            bubble.textContent = text;
+            
+            // Convert \n to <br> for proper line breaks
+            var htmlText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+            bubble.innerHTML = htmlText;
             msgDiv.appendChild(bubble);
             messagesContainer.appendChild(msgDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -135,22 +140,50 @@
                     if (result.results && result.results.length > 0) {
                         responseText += '📋 Results:\n';
                         
+                        // Helper function to format values nicely
+                        function formatValue(key, value) {
+                            // Handle null/undefined
+                            if (value === null || value === undefined || value === 'N/A') {
+                                return 'N/A';
+                            }
+                            
+                            // Handle JSON objects (like name field with translations)
+                            if (typeof value === 'object' && value !== null) {
+                                // Try to extract English name
+                                if (value.en_US) return value.en_US;
+                                if (value.en_us) return value.en_us;
+                                // Fallback to first available value
+                                var keys = Object.keys(value);
+                                if (keys.length > 0) return value[keys[0]];
+                                return JSON.stringify(value);
+                            }
+                            
+                            // Format price fields with currency
+                            if ((key.includes('price') || key.includes('cost')) && typeof value === 'number') {
+                                return '₹' + value.toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                            }
+                            
+                            return value;
+                        }
+                        
                         // Format results cleanly
                         result.results.forEach(function(row, index) {
                             responseText += '\n' + (index + 1) + '. ';
                             var fields = [];
                             for (var key in row) {
                                 if (row.hasOwnProperty(key)) {
-                                    fields.push(key + ': ' + row[key]);
+                                    var displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, function(l){ return l.toUpperCase(); });
+                                    var displayValue = formatValue(key, row[key]);
+                                    fields.push(displayKey + ': ' + displayValue);
                                 }
                             }
-                            responseText += fields.join(' | ');
+                            responseText += fields.join(' • ');
                         });
                         
-                        // Show query only for successful results  
-                        if (result.query) {
-                            responseText += '\n\n💡 Query: ' + result.query;
-                        }
+                        // Don't show SQL query in user-facing results (keep it clean)
+                        // if (result.query) {
+                        //     responseText += '\n\n💡 Query: ' + result.query;
+                        // }
                     }
                 } else {
                     responseText = '❓ Unexpected response format';
@@ -173,6 +206,10 @@
                 chatInput.focus();
             });
         }
+
+        // Ensure initial minimized state visibility
+        if (chatbot) chatbot.style.display = 'none';
+        if (chatToggle) chatToggle.style.display = 'flex';
 
         // Toggle chat visibility
         function toggleChat() {
@@ -208,7 +245,6 @@
         }
         
         console.log('Chatbot initialized successfully!');
-        chatInput.focus();
     }
 
     // Initialize when DOM is ready
