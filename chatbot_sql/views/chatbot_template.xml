@@ -2,21 +2,25 @@
     <template id="chatbot_page" inherit_id="website.layout">
         <xpath expr="//head" position="inside">
             <style>
-                #chatbot, #chatToggle { 
-                    z-index: 99999 !important; 
+                /* Force chatbot to be on top of everything */
+                #chatbot { 
+                    z-index: 2147483647 !important; 
                     position: fixed !important;
+                    pointer-events: auto !important;
                 }
-                .chatbot-high-priority { 
+                #chatToggle { 
+                    z-index: 2147483647 !important; 
                     position: fixed !important;
-                    z-index: 99999 !important;
+                    pointer-events: auto !important;
                 }
-                #chatbot * {
-                    z-index: 99999 !important;
+                /* Override any competing z-index values */
+                .o_grid_item, .o_grid_item_image, .o_colored_level {
+                    z-index: 1 !important;
                 }
             </style>
         </xpath>
         <xpath expr="//main" position="inside">
-                <div id="chatbot" class="chatbot-high-priority" style="position:fixed!important;z-index:99999!important;bottom:20px;right:20px;width:380px;height:500px;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);display:flex;flex-direction:column;font-family:system-ui,-apple-system,sans-serif;">
+                <div id="chatbot" style="position:fixed!important;z-index:2147483647!important;bottom:20px!important;right:20px!important;width:380px;height:500px;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);display:flex;flex-direction:column;font-family:system-ui,-apple-system,sans-serif;pointer-events:auto!important;">
                     <!-- Header -->
                     <div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:15px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;">
                         <div style="display:flex;align-items:center;">
@@ -44,7 +48,7 @@
             </div>
             
                 <!-- Chat Toggle Button (when minimized) -->
-                <div id="chatToggle" class="chatbot-high-priority" style="position:fixed!important;z-index:99999!important;bottom:20px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);color:white;font-size:24px;">
+                <div id="chatToggle" style="position:fixed!important;z-index:2147483647!important;bottom:20px!important;right:20px!important;width:60px;height:60px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);color:white;font-size:24px;pointer-events:auto!important;">
                     💬
                 </div>
         </xpath>

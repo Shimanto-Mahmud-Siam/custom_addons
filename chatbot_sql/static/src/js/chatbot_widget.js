@@ -5,6 +5,34 @@
     function init() {
         console.log('Starting chatbot initialization...');
         
+        // Force chatbot to be on top of everything
+        function forceTopPriority() {
+            var chatbot = document.getElementById('chatbot');
+            var chatToggle = document.getElementById('chatToggle');
+            
+            if (chatbot) {
+                chatbot.style.zIndex = '2147483647';
+                chatbot.style.position = 'fixed';
+                chatbot.style.pointerEvents = 'auto';
+            }
+            
+            if (chatToggle) {
+                chatToggle.style.zIndex = '2147483647';
+                chatToggle.style.position = 'fixed';
+                chatToggle.style.pointerEvents = 'auto';
+            }
+            
+            // Lower z-index of competing elements
+            var gridItems = document.querySelectorAll('.o_grid_item, .o_grid_item_image, .o_colored_level');
+            for (var i = 0; i < gridItems.length; i++) {
+                gridItems[i].style.zIndex = '1';
+            }
+        }
+        
+        // Apply immediately and repeatedly to ensure it stays on top
+        forceTopPriority();
+        setInterval(forceTopPriority, 1000); // Check every second
+        
         var sendBtn = document.getElementById('sendBtn');
         var chatInput = document.getElementById('chatInput');
         var messagesContainer = document.getElementById('messagesContainer');
