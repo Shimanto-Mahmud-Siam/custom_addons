@@ -1,0 +1,52 @@
+<odoo>
+    <template id="chatbot_page" inherit_id="website.layout">
+        <xpath expr="//head" position="inside">
+            <style>
+                #chatbot, #chatToggle { 
+                    z-index: 99999 !important; 
+                    position: fixed !important;
+                }
+                .chatbot-high-priority { 
+                    position: fixed !important;
+                    z-index: 99999 !important;
+                }
+                #chatbot * {
+                    z-index: 99999 !important;
+                }
+            </style>
+        </xpath>
+        <xpath expr="//main" position="inside">
+                <div id="chatbot" class="chatbot-high-priority" style="position:fixed!important;z-index:99999!important;bottom:20px;right:20px;width:380px;height:500px;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);display:flex;flex-direction:column;font-family:system-ui,-apple-system,sans-serif;">
+                    <!-- Header -->
+                    <div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:15px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;">
+                        <div style="display:flex;align-items:center;">
+                            <div style="width:8px;height:8px;background:#4ade80;border-radius:50%;margin-right:8px;"></div>
+                            <span style="font-weight:600;">SQL Assistant</span>
+                        </div>
+                        <button id="toggleChat" style="background:none;border:none;color:white;font-size:18px;cursor:pointer;">−</button>
+                    </div>
+                
+                <!-- Messages Container -->
+                <div id="messagesContainer" style="flex:1;padding:15px;overflow-y:auto;background:#f8fafc;">
+                    <div id="welcomeMessage" style="text-align:center;color:#64748b;font-size:14px;margin:20px 0;">
+                        👋 Hi! Ask me about your database<br/>
+                        <small>Try: "show me users" or "list partners"</small>
+                    </div>
+                </div>
+                
+                <!-- Input Area -->
+                <div style="padding:15px;border-top:1px solid #e2e8f0;background:white;border-radius:0 0 12px 12px;">
+                    <div style="display:flex;gap:10px;">
+                        <input id="chatInput" type="text" placeholder="Ask about your data..." style="flex:1;padding:12px;border:1px solid #d1d5db;border-radius:8px;outline:none;font-size:14px;" />
+                        <button id="sendBtn" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border:none;padding:12px 16px;border-radius:8px;cursor:pointer;font-weight:600;min-width:60px;">Send</button>
+                    </div>
+                </div>
+            </div>
+            
+                <!-- Chat Toggle Button (when minimized) -->
+                <div id="chatToggle" class="chatbot-high-priority" style="position:fixed!important;z-index:99999!important;bottom:20px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.15);color:white;font-size:24px;">
+                    💬
+                </div>
+        </xpath>
+    </template>
+</odoo>
