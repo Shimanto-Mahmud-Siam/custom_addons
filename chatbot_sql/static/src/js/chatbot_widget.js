@@ -120,20 +120,40 @@
                 // Remove loading message
                 messagesContainer.removeChild(loadingMsg);
                 
-                // Add bot response
+                // Add bot response with clean formatting
                 var result = data.result || data;
                 var responseText;
                 
-                if (result.error) {
-                    responseText = '❌ ' + result.error + 
-                        (result.query ? '\n\n🔍 SQL: ' + result.query : '');
-                } else if (result.result && result.query) {
-                    var count = Array.isArray(result.result) ? result.result.length : 0;
-                    responseText = '✅ Found ' + count + ' result(s)\n\n' +
-                        '🔍 SQL: ' + result.query + '\n\n' +
-                        '📊 Results:\n' + JSON.stringify(result.result, null, 2);
+                if (result.error || result.success === false) {
+                    responseText = '❌ ' + (result.error || 'Query failed');
+                    if (result.query) {
+                        responseText += '\n\n💡 SQL: ' + result.query;
+                    }
+                } else if (result.success === true) {
+                    responseText = '✅ ' + result.message + '\n\n';
+                    
+                    if (result.results && result.results.length > 0) {
+                        responseText += '📋 Results:\n';
+                        
+                        // Format results cleanly
+                        result.results.forEach(function(row, index) {
+                            responseText += '\n' + (index + 1) + '. ';
+                            var fields = [];
+                            for (var key in row) {
+                                if (row.hasOwnProperty(key)) {
+                                    fields.push(key + ': ' + row[key]);
+                                }
+                            }
+                            responseText += fields.join(' | ');
+                        });
+                        
+                        // Show query only for successful results  
+                        if (result.query) {
+                            responseText += '\n\n💡 Query: ' + result.query;
+                        }
+                    }
                 } else {
-                    responseText = '❓ No results returned';
+                    responseText = '❓ Unexpected response format';
                 }
                 
                 addMessage(responseText, false);
