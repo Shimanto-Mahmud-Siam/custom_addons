@@ -1,118 +1,40 @@
 <odoo>
     <template id="chatbot_page" inherit_id="website.layout">
-        <xpath expr="//head" position="inside">
-            <style>
-        /* keep it above everything */
-        #chatbot, #chatToggle { 
-          z-index: 2147483647 !important; 
-          position: fixed !important;
-          pointer-events: auto !important;
-        }
-        .o_grid_item, .o_grid_item_image, .o_colored_level {
-          z-index: 1 !important;
-        }
-            </style>
-        </xpath>
-
         <xpath expr="//main" position="inside">
-            <div id="chatbot" style="position:fixed!important;
-               z-index:2147483647!important;
-               bottom:20px!important;
-               right:20px!important;
-               width:380px;
-               height:500px;
-               background:#1C1C1C; /* dark charcoal */
-               border:1px solid #d8b87d; /* thin gold border */
-               border-radius:12px;
-               box-shadow:0 4px 20px rgba(0,0,0,0.4);
-               display:none;
-               flex-direction:column;
-               font-family:system-ui,-apple-system,sans-serif;
-               color:#F8F5E9;
-               pointer-events:auto!important;">
-
+            <!-- Main Chatbot Container -->
+            <div id="chatbot">
                 <!-- Header -->
-                <div style="background:linear-gradient(90deg,#D4AF37 0%,#d8b87d 100%);
-                    color:#1C1C1C;
-                    padding:15px;
-                    border-radius:12px 12px 0 0;
-                    display:flex;
-                    align-items:center;
-                    justify-content:space-between;
-                    font-weight:600;">
-                    <span>CHATBOT</span>
-                    <button id="toggleChat" style="background:none;border:none;color:#1C1C1C;font-size:18px;cursor:pointer;">
-            −
-                    </button>
+                <div class="header">
+                    <span>Website Assistant</span>
+                    <div class="header-buttons">
+                        <button id="clearHistory" title="Clear chat history" aria-label="Clear chat history">🗑️</button>
+                        <button id="toggleChat" aria-label="Minimize chat">−</button>
+                    </div>
                 </div>
 
-                <!-- Messages -->
-                <div id="messagesContainer" style="flex:1;
-                    padding:15px;
-                    overflow-y:auto;
-                    background:#2E2E2E;">
-                    <div id="welcomeMessage" style="text-align:center;
-                      color:#F8F5E9;
-                      font-size:14px;
-                      margin:20px 0;">
+                <!-- Messages Container -->
+                <div id="messagesContainer">
+                    <div id="welcomeMessage">
+                        Welcome! I can help you find products in our jewelry store. Try asking me about gold rings, silver bracelets, or products under a certain price.
                     </div>
                 </div>
 
                 <!-- Input Area -->
-                <div style="padding:15px;
-                    border-top:1px solid #3E3A26;
-                    background:#1C1C1C;
-                    border-radius:0 0 12px 12px;">
-                    <div style="display:flex;gap:10px;">
-                        <input id="chatInput" type="text" placeholder="Ask about your data..." style="flex:1;
-                          padding:12px;
-                          border:1px solid #3E3A26;
-                          background:#262626;
-                          color:#F8F5E9;
-                          border-radius:8px;
-                          outline:none;
-                          font-size:14px;" />
-                        <button id="sendBtn" style="background:linear-gradient(135deg,#C0392B 0%,#FFBF00 100%);
-               color:#fff;
-               border:none;
-               padding:10px; /* Changed */
-               border-radius:8px;
-               cursor:pointer;
-               font-weight:600;
-               width:40px; /* Changed */
-               height:40px; /* Added */
-               min-width:40px; /* Changed */
-               display:flex; /* Added */
-               align-items:center; /* Added */
-               justify-content:center; /* Added */">
-
+                <div class="input-area">
+                    <div class="input-container">
+                        <input id="chatInput" type="text" placeholder="Ask about your data..." aria-label="Type your message" />
+                        <button id="sendBtn" aria-label="Send message">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                             </svg>
-
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Floating Toggle -->
-            <div id="chatToggle" style="position:fixed!important;
-                  z-index:2147483647!important;
-                  bottom:20px!important;
-                  right:20px!important;
-                  width:60px;
-                  height:60px;
-                  background:#d8b87d;
-                  border-radius:50%;
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  cursor:pointer;
-                  box-shadow:0 4px 20px rgba(0,0,0,0.4);
-                  color:#1C1C1C;
-                  font-size:24px;
-                  pointer-events:auto!important;">
-        💬
+            <!-- Floating Toggle Button -->
+            <div id="chatToggle" aria-label="Open chat assistant" role="button" tabindex="0">
+                💬
             </div>
         </xpath>
     </template>

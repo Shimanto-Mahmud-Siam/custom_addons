@@ -2,36 +2,109 @@
 (function() {
     'use strict';
 
-    function init() {
-        console.log('Starting chatbot initialization...');
-        
-        // Force chatbot to be on top of everything
-        function forceTopPriority() {
-            var chatbot = document.getElementById('chatbot');
-            var chatToggle = document.getElementById('chatToggle');
+        function init() {
+            console.log('Starting chatbot initialization...');
             
-            if (chatbot) {
-                chatbot.style.zIndex = '2147483647';
-                chatbot.style.position = 'fixed';
-                chatbot.style.pointerEvents = 'auto';
+            // Load chat history from sessionStorage (safer than localStorage)
+            function loadChatHistory() {
+                try {
+                    var savedHistory = sessionStorage.getItem('chatbot_history');
+                    if (savedHistory) {
+                        var history = JSON.parse(savedHistory);
+                        var messagesContainer = document.getElementById('messagesContainer');
+                        var welcomeMsg = document.getElementById('welcomeMessage');
+                        
+                        if (history.length > 0 && welcomeMsg) {
+                            welcomeMsg.style.display = 'none';
+                        }
+                        
+                        history.forEach(function(msg) {
+                            var msgDiv = document.createElement('div');
+                            msgDiv.style.cssText = 
+                                'display: flex; margin-bottom: 12px;' +
+                                (msg.isUser ? 'justify-content: flex-end;' : 'justify-content: flex-start;');
+
+                            var bubble = document.createElement('div');
+                            bubble.className = 'message-bubble ' + (msg.isUser ? 'message-user' : 'message-bot');
+                            
+                            if (msg.isUser) {
+                                // Use textContent for user messages (XSS-safe)
+                                bubble.textContent = msg.text;
+                            } else {
+                                // For bot messages, safely build HTML elements
+                                var lines = msg.text.split('\n');
+                                lines.forEach(function(line, index) {
+                                    if (index > 0) {
+                                        bubble.appendChild(document.createElement('br'));
+                                    }
+                                    
+                                    // Check if line contains a product link
+                                    var linkMatch = line.match(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/);
+                                    if (linkMatch) {
+                                        var link = document.createElement('a');
+                                        link.href = linkMatch[1];
+                                        link.textContent = linkMatch[2];
+                                        link.target = '_blank';
+                                        link.style.color = '#667eea';
+                                        link.style.textDecoration = 'underline';
+                                        bubble.appendChild(link);
+                                        
+                                        // Add the rest of the line after the link
+                                        var remainingText = line.replace(/<a[^>]*>.*?<\/a>/, '').trim();
+                                        if (remainingText) {
+                                            var span = document.createElement('span');
+                                            span.textContent = remainingText;
+                                            bubble.appendChild(span);
+                                        }
+                                    } else {
+                                        // Regular text line
+                                        var span = document.createElement('span');
+                                        span.textContent = line;
+                                        bubble.appendChild(span);
+                                    }
+                                });
+                            }
+                            
+                            msgDiv.appendChild(bubble);
+                            messagesContainer.appendChild(msgDiv);
+                        });
+                        
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        console.log('Loaded', history.length, 'messages from history');
+                    }
+                } catch (e) {
+                    console.error('Error loading chat history:', e);
+                }
             }
             
-            if (chatToggle) {
-                chatToggle.style.zIndex = '2147483647';
-                chatToggle.style.position = 'fixed';
-                chatToggle.style.pointerEvents = 'auto';
+            // Save chat history to sessionStorage (safer than localStorage)
+            function saveChatHistory() {
+                try {
+                    var messagesContainer = document.getElementById('messagesContainer');
+                    var messages = [];
+                    
+                    // Get all message divs (skip welcome message)
+                    var messageDivs = messagesContainer.querySelectorAll('div[style*="display: flex"]');
+                    messageDivs.forEach(function(msgDiv) {
+                        var bubble = msgDiv.querySelector('div[style*="max-width: 75%"]');
+                        if (bubble) {
+                            var isUser = msgDiv.style.justifyContent === 'flex-end';
+                            var text = bubble.textContent || bubble.innerText || '';
+                            messages.push({
+                                text: text,
+                                isUser: isUser,
+                                timestamp: Date.now()
+                            });
+                        }
+                    });
+                    
+                    sessionStorage.setItem('chatbot_history', JSON.stringify(messages));
+                    console.log('Saved', messages.length, 'messages to history');
+                } catch (e) {
+                    console.error('Error saving chat history:', e);
+                }
             }
             
-            // Lower z-index of competing elements
-            var gridItems = document.querySelectorAll('.o_grid_item, .o_grid_item_image, .o_colored_level');
-            for (var i = 0; i < gridItems.length; i++) {
-                gridItems[i].style.zIndex = '1';
-            }
-        }
-        
-        // Apply immediately and repeatedly to ensure it stays on top
-        forceTopPriority();
-        setInterval(forceTopPriority, 1000); // Check every second
         
         var sendBtn = document.getElementById('sendBtn');
         var chatInput = document.getElementById('chatInput');
@@ -39,6 +112,7 @@
         var chatbot = document.getElementById('chatbot');
         var chatToggle = document.getElementById('chatToggle');
         var toggleBtn = document.getElementById('toggleChat');
+        var clearHistoryBtn = document.getElementById('clearHistory');
         
         console.log('Found elements:', {
             sendBtn: !!sendBtn,
@@ -69,20 +143,52 @@
                 (isUser ? 'justify-content: flex-end;' : 'justify-content: flex-start;');
             
             var bubble = document.createElement('div');
-            bubble.style.cssText = 
-            'max-width: 75%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.6; word-wrap: break-word; margin-bottom: 8px; ' + 
-            (isUser 
-                ? 'background: #3A3A3A; color: #F5F5F5;'      // user bubble
-                : 'background: #2A2A2A; color: #EDEDED;');   // bot bubble
+            bubble.className = 'message-bubble ' + (isUser ? 'message-user' : 'message-bot');
 
+            if (isUser) {
+                // Use textContent for user messages to prevent XSS
+                bubble.textContent = text;
+            } else {
+                // For bot messages, safely build HTML elements
+                var lines = text.split('\n');
+                lines.forEach(function(line, index) {
+                    if (index > 0) {
+                        bubble.appendChild(document.createElement('br'));
+                    }
+                    
+                    // Check if line contains a product link
+                    var linkMatch = line.match(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/);
+                    if (linkMatch) {
+                        var link = document.createElement('a');
+                        link.href = linkMatch[1];
+                        link.textContent = linkMatch[2];
+                        link.target = '_blank';
+                        link.style.color = '#667eea';
+                        link.style.textDecoration = 'underline';
+                        bubble.appendChild(link);
+                        
+                        // Add the rest of the line after the link
+                        var remainingText = line.replace(/<a[^>]*>.*?<\/a>/, '').trim();
+                        if (remainingText) {
+                            var span = document.createElement('span');
+                            span.textContent = remainingText;
+                            bubble.appendChild(span);
+                        }
+                    } else {
+                        // Regular text line
+                        var span = document.createElement('span');
+                        span.textContent = line;
+                        bubble.appendChild(span);
+                    }
+                });
+            }
             
-            
-            // Convert \n to <br> for proper line breaks
-            var htmlText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-            bubble.innerHTML = htmlText;
             msgDiv.appendChild(bubble);
             messagesContainer.appendChild(msgDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Save chat history after adding message
+            setTimeout(saveChatHistory, 100);
             
             return msgDiv;
         }
@@ -93,13 +199,16 @@
             
             console.log('Sending message:', message);
             
+            // Store original send button HTML
+            var originalSendBtnHTML = sendBtn.innerHTML;
+            
             // Add user message
             addMessage(message, true);
             
             // Clear input and show loading
             chatInput.value = '';
             sendBtn.disabled = true;
-            sendBtn.textContent = 'Sending...';
+            sendBtn.innerHTML = '⏳';
             
             var loadingMsg = addMessage('🤖 Thinking...', false);
             
@@ -170,13 +279,30 @@
                         result.results.forEach(function(row, index) {
                             responseText += '\n' + (index + 1) + '. ';
                             var fields = [];
+                            var productName = '';
+                            var productUrl = '';
+                            
                             for (var key in row) {
                                 if (row.hasOwnProperty(key)) {
-                                    var displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, function(l){ return l.toUpperCase(); });
-                                    var displayValue = formatValue(key, row[key]);
-                                    fields.push(displayKey + ': ' + displayValue);
+                                    if (key === 'name') {
+                                        productName = formatValue(key, row[key]);
+                                    } else if (key === 'product_url') {
+                                        productUrl = row[key];
+                                    } else {
+                                        var displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, function(l){ return l.toUpperCase(); });
+                                        var displayValue = formatValue(key, row[key]);
+                                        fields.push(displayKey + ': ' + displayValue);
+                                    }
                                 }
                             }
+                            
+                            // Add product name as clickable link if URL exists
+                            if (productUrl && productName) {
+                                fields.unshift('<a href="' + productUrl + '" target="_blank" style="color: #667eea; text-decoration: underline;">' + productName + '</a>');
+                            } else if (productName) {
+                                fields.unshift('Name: ' + productName);
+                            }
+                            
                             responseText += fields.join(' • ');
                         });
                         
@@ -202,7 +328,7 @@
             })
             .finally(function() {
                 sendBtn.disabled = false;
-                sendBtn.textContent = 'Send';
+                sendBtn.innerHTML = originalSendBtnHTML;
                 chatInput.focus();
             });
         }
@@ -244,6 +370,30 @@
             chatToggle.addEventListener('click', toggleChat);
         }
         
+        // Clear history functionality
+        if (clearHistoryBtn) {
+            clearHistoryBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear the chat history?')) {
+                    // Clear sessionStorage
+                    sessionStorage.removeItem('chatbot_history');
+                    
+                    // Clear the messages container
+                    messagesContainer.innerHTML = '';
+                    
+                    // Show welcome message again
+                    var welcomeMsg = document.getElementById('welcomeMessage');
+                    if (welcomeMsg) {
+                        welcomeMsg.style.display = 'block';
+                    }
+                    
+                    console.log('Chat history cleared');
+                }
+            });
+        }
+        
+        // Load chat history on initialization
+        loadChatHistory();
+        
         console.log('Chatbot initialized successfully!');
     }
 
@@ -253,7 +403,4 @@
     } else {
         init();
     }
-
-    // Also try initialization after a short delay to ensure Odoo has fully loaded
-    setTimeout(init, 1000);
 })();
