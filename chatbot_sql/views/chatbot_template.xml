@@ -1,5 +1,9 @@
 <odoo>
     <template id="chatbot_page" inherit_id="website.layout">
+        <xpath expr="//head" position="inside">
+            <link rel="stylesheet" type="text/css" href="/chatbot_sql/static/src/css/chatbot.css"/>
+            <script type="text/javascript" src="/chatbot_sql/static/src/js/chatbot_widget.js"></script>
+        </xpath>
         <xpath expr="//main" position="inside">
             <!-- Main Chatbot Container -->
             <div id="chatbot">
@@ -15,7 +19,7 @@
                 <!-- Messages Container -->
                 <div id="messagesContainer">
                     <div id="welcomeMessage">
-                        Welcome! I can help you find products in our jewelry store. Try asking me about gold rings, silver bracelets, or products under a certain price.
+                        Welcome! I can help you find products in our jewelry store. 
                     </div>
                 </div>
 

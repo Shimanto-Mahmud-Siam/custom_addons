@@ -4,6 +4,7 @@ import requests
 import logging
 import json
 import re
+from functools import reduce
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 _logger = logging.getLogger(__name__)
@@ -23,49 +24,71 @@ class ChatbotController(http.Controller):
         
         # 1. Product type/material filters (gold, silver, bangles, bracelets, etc.)
         product_keywords = ['gold', 'silver', 'bangle', 'bracelet', 'earring', 'ring', 'necklace', 'chain']
+        matched_keywords = []
         for keyword in product_keywords:
             if keyword in message:
-                domain.append(['name', 'ilike', keyword])
-                break  # Only match the first keyword found
+                matched_keywords.append(keyword)
         
-        # 2. Price constraints
-        price_match = re.search(r'(\d+)', message)
-        price = price_match.group(1) if price_match else None
+        # Add name filters for matched keywords (AND logic - product must match all keywords)
+        for kw in matched_keywords:
+            domain.append(['name', 'ilike', kw])
         
-        if 'under' in message or 'within' in message or 'below' in message or '<' in message:
-            if price:
-                domain.append(['list_price', '<', int(price)])
+        # 2. Price constraints - extract ALL numbers (only for non-service queries)
+        if not is_service_query:
+            prices = re.findall(r'\b(\d+)\b', message)
+            
+            # Handle range queries
+            if 'between' in message or 'range' in message or 'from' in message:
+                if len(prices) >= 2:
+                    price1, price2 = sorted([int(p) for p in prices[:2]])
+                    domain.append(['list_price', '>=', price1])
+                    domain.append(['list_price', '<=', price2])
+                elif prices:
+                    domain.append(['list_price', '<=', int(prices[0])])
+                else:
+                    domain.append(['list_price', '>=', 0])
+            # Handle single constraints (under, within, below, above, over)
             else:
-                domain.append(['list_price', '<', 15000])  # Default price
-            domain.append(['list_price', '>', 0])
-        elif 'above' in message or 'over' in message or '>' in message:
-            if price:
-                domain.append(['list_price', '>', int(price)])
-            else:
-                domain.append(['list_price', '>', 50000])  # Default price
-        elif 'between' in message:
-            prices = re.findall(r'(\d+)', message)
-            if len(prices) >= 2:
-                # Sort prices to ensure correct order
-                price1, price2 = sorted([int(p) for p in prices[:2]])
-                domain.append(['list_price', '>=', price1])
-                domain.append(['list_price', '<=', price2])
-            else:
-                domain.append(['list_price', '>', 0])
-        else:
-            # Default: show products with prices
-            domain.append(['list_price', '>', 0])
+                # Find matching constraint keyword and operator
+                constraint_map = {
+                    'under': ('<=', 15000),
+                    'within': ('<=', 15000),
+                    'below': ('<=', 15000),
+                    'above': ('>', 50000),
+                    'over': ('>', 50000)
+                }
+                
+                constraint_op = None
+                default_price = None
+                
+                # Check for constraint keywords
+                for keyword, (op, default) in constraint_map.items():
+                    if keyword in message:
+                        constraint_op = op
+                        default_price = default
+                        break
+                
+                # Apply constraint if found
+                if constraint_op:
+                    price_val = int(prices[-1]) if prices else default_price
+                    domain.append(['list_price', constraint_op, price_val])
+                    if constraint_op == '<=':  # For "under" constraints, ensure >= 0
+                        domain.append(['list_price', '>=', 0])
+                else:
+                    # Default: show products with prices
+                    domain.append(['list_price', '>=', 0])
         
-        # 3. Service filter
+        # 3. Service filter - only add if not already service query
         if is_service_query:
             domain.append(['type', '=', 'service'])
         else:
             domain.append(['type', '!=', 'service'])
         
-        # 4. Special cases for labor cost
-        if 'labor' in message or 'cost' in message:
+        # 4. Special cases for labor cost - only if not service query
+        if ('labor' in message or 'cost' in message) and not is_service_query:
             domain.append(['labor_cost', '>', 0])
         
+        _logger.info(f"Generated fallback domain: {domain}")
         return domain
 
     @http.route('/chatbot/test-db', type='json', auth='public', methods=['POST'])
